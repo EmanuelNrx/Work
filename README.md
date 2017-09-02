@@ -1,2 +1,2 @@
 # Work
-My C++ files from various contests / tasks
+My C++ files from various contests / problems
