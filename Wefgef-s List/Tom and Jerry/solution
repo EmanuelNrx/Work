@@ -1,0 +1,20 @@
+This problem is actually the well known cop-win game so all you have to do is to check if the 
+given graph is dismantlable. By definition, a graph is dismantlable if it has a dismantling
+order which can be found with the following algorithm:
+ 
+A node X is said to be dominated by a node Y if X and Y are adjacent and the list of 
+neighbors of X is included in the list of neighbors of Y
+ 
+Let G be the initial graph
+
+while (|G| > 1)
+|   find a suitable node X which is dominated by one of it's neighbors
+|    
+|   if (X has been found) 
+|       G <-- G - <X>
+|   else
+|       G is not dismantlable
+
+if (|G| == 1)
+    G is dismantlable
+       
