@@ -1,8 +1,4 @@
-/*
-    © by EmanuelNrx
- 
-    This problem is easy, everyone knows that :)
-*/
+/* © by EmanuelNrx */
 
 #include <bits/stdc++.h>
 using namespace std;
