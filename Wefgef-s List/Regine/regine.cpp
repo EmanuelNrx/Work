@@ -40,7 +40,7 @@ int main(void)
         
     for(int i = 1; i <= n; ++i)
     for(int j = 1, k = n - i + 1; j <= i; ++j, k += 2)
-        if(k == (2 * n + 1) / 3 || k == (4 * n + 2) / 3)
+        if(k == (2 * n + 1) / 3 or k == (4 * n + 2) / 3)
             _array.push_back(make_pair(i, j));
             
     if((n + cnt) % 3 == 0) {
