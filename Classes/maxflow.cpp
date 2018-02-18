@@ -5,7 +5,7 @@ private:
     static constexpr type INF = numeric_limits<type> :: max() / 2;
     static constexpr long double EPS = 1e-6;
     
-    static int cmp(const type x) {
+    static inline int cmp(const type x) {
         if (fabs(x) < EPS)
             return 0;
         return x < 0 ? -1 : 1;
@@ -13,16 +13,16 @@ private:
     
     struct edge {
         int x, y; type flo, cap;
-
+        
         edge(int _x, int _y, type _cap) :
-            x(_x), y(_y), cap(_cap), flo(0) {};
+        x(_x), y(_y), cap(_cap), flo(0) {};
     };
     
-    vector<edge> lst;
-    vector<vector<int>> edg;
+    vector<edge> lst; vector<int> dis;
+    vector<vector<int>> edg; vector<bool> oki;
     
     void bfs(const int src, const int dst) {
-        vector<int> dis(edg.size(), INF); dis[src] = 0;
+        dis.assign(edg.size(), INF); dis[src] = 0;
         
         for (deque<int> que(1, src); que.size(); que.pop_front()) {
             int x = que.front();
@@ -48,7 +48,7 @@ private:
         for (int it : edg[x]) {
             int y = lst[it].y;
             
-            if (!cmp(lst[it].cap - lst[it].flo))
+            if (!cmp(lst[it].cap - lst[it].flo) or cmp(dis[y] - dis[x] - 1))
                 continue;
             type aux = dfs(y, dst, min(cap, lst[it].cap - lst[it].flo));
             
@@ -60,6 +60,17 @@ private:
         }
         
         return cap;
+    }
+    
+    void fill(const int x, vector<int> &ans) {
+        oki[x] = true;
+        
+        for (int it : edg[x]) {
+            int y = lst[it].y;
+            
+            if (cmp(lst[it].cap - lst[it].flo) and !oki[y])
+                fill(y, ans);
+        }
     }
 public:
     MaxFlow(int sz) {
@@ -87,5 +98,16 @@ public:
         } while (cmp(aux));
         
         return ans;
+    }
+    
+    type getMinCut(const int src, const int dst, vector<int> &ans) {
+        oki.assign(edg.size(), false);
+        type sol = getMaxFlow(src, dst);
+        
+        fill(src, ans); ans.clear();
+        for (int i = 0; i < edg.size(); ++i)
+            if (oki[i]) ans.push_back(i);
+        
+        return sol;
     }
 };
