@@ -1,8 +1,8 @@
-// unfinished
+// further optimizations required
 template <class type>
 class MaxFlow {
 private:
-    static constexpr type INF = numeric_limits<type> :: max() / 2;
+    static constexpr type INF = std::numeric_limits<type> :: max() / 2;
     static constexpr long double EPS = 1e-6;
     
     static inline int cmp(const type x) {
@@ -18,20 +18,21 @@ private:
         x(_x), y(_y), cap(_cap), flo(0) {};
     };
     
-    vector<edge> lst; vector<int> dis;
-    vector<vector<int>> edg; vector<bool> oki;
+    std::vector<bool> oki; std::deque<int> que;
+    std::vector<edge> lst; std::vector<type> dis;
+    std::vector<int> ptx; std::vector<std::vector<int>> edg;
     
-    void bfs(const int src, const int dst) {
-        dis.assign(edg.size(), INF); dis[src] = 0;
+    bool bfs(const int src, const int dst, type cap) {
+        std::fill(dis.begin(), dis.end(), (type)INF); dis[src] = 0;
         
-        for (deque<int> que(1, src); que.size(); que.pop_front()) {
+        for (que.assign(1, src); que.size() and dis[dst] == INF; que.pop_front()) {
             int x = que.front();
             if (x == dst) continue;
             
             for (int it : edg[x]) {
                 int y = lst[it].y;
                 
-                if (!cmp(lst[it].cap - lst[it].flo))
+                if (cmp(lst[it].cap - lst[it].flo - cap) < 0)
                     continue;
                 if (dis[y] > dis[x] + 1) {
                     dis[y] = dis[x] + 1;
@@ -39,30 +40,31 @@ private:
                 }
             }
         }
+        
+        return dis[dst] != INF;
     }
     
-    type dfs(const int x, const int dst, type cap) {
-        if (!cmp(cap)) return 0;
+    bool dfs(const int x, const int dst, type cap) {
         if (x == dst) return cap;
         
-        for (int it : edg[x]) {
-            int y = lst[it].y;
+        for (; ptx[x] < edg[x].size(); ++ptx[x]) {
+            int it = edg[x][ptx[x]], y = lst[it].y;
             
-            if (!cmp(lst[it].cap - lst[it].flo) or cmp(dis[y] - dis[x] - 1))
+            if (cmp(dis[y] - dis[x] - 1) != 0 or
+                cmp(lst[it].cap - lst[it].flo - cap) < 0)
                 continue;
-            type aux = dfs(y, dst, min(cap, lst[it].cap - lst[it].flo));
             
-            if (cmp(aux) > 0) {
-                lst[it].flo += aux;
-                lst[it ^ 1].flo -= aux;
-                cap -= aux;
+            if (dfs(y, dst, cap)) {
+                lst[it].flo += cap;
+                lst[it ^ 1].flo -= cap;
+                return true;
             }
         }
         
-        return cap;
+        return false;
     }
     
-    void fill(const int x, vector<int> &ans) {
+    void fill(const int x, std::vector<int> &ans) {
         oki[x] = true;
         
         for (int it : edg[x]) {
@@ -74,34 +76,44 @@ private:
     }
 public:
     MaxFlow(int sz) {
-        edg.resize(sz);
+        edg.resize(sz); dis.resize(sz);
+        oki.resize(sz); ptx.resize(sz);
     }
     
-    void addUndirectedEdge(const int x, const int y, const type c) {
+    inline void addUndirectedEdge(const int x, const int y, const type c) {
         edg[x].push_back((int) lst.size()); lst.push_back(edge(x, y, c));
         edg[y].push_back((int) lst.size()); lst.push_back(edge(y, x, c));
     }
     
-    void addDirectedEdge(const int x, const int y, const type c) {
+    inline void addDirectedEdge(const int x, const int y, const type c) {
         edg[x].push_back((int) lst.size()); lst.push_back(edge(x, y, c));
         edg[y].push_back((int) lst.size()); lst.push_back(edge(y, x, 0));
     }
     
     type getMaxFlow(const int src, const int dst) {
-        for (int i = 0; i < lst.size(); ++i)
+        type lim = INF;
+        for (int i = 0; i < lst.size(); ++i) {
             lst[i].flo = 0;
+            lim = std::max(lim, lst[i].cap);
+        }
         
-        type aux, ans = 0;
-        do {
-            bfs(src, dst);
-            aux = dfs(src, dst, INF); ans += aux;
-        } while (cmp(aux));
+        type ans = 0;
+        for (; cmp(lim); ) {
+            if (!bfs(src, dst, lim)) {
+                lim /= 2;
+                continue;
+            }
+            
+            std::fill(ptx.begin(), ptx.end(), 0);
+            while (dfs(src, dst, lim))
+                ans += lim;
+        }
         
         return ans;
     }
     
-    type getMinCut(const int src, const int dst, vector<int> &ans) {
-        oki.assign(edg.size(), false);
+    type getMinCut(const int src, const int dst, std::vector<int> &ans) {
+        fill(oki.begin(), oki.end(), false);
         type sol = getMaxFlow(src, dst);
         
         fill(src, ans); ans.clear();
@@ -110,4 +122,4 @@ public:
         
         return sol;
     }
-};
+}; 
