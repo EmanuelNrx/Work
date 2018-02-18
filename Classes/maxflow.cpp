@@ -1,125 +1,126 @@
-// further optimizations required
-template <class type>
+// done | further optimization required (eventually)
+template <class CapacityType>
 class MaxFlow {
 private:
-    static constexpr type INF = std::numeric_limits<type> :: max() / 2;
+    static constexpr int NIL = -1;
     static constexpr long double EPS = 1e-6;
-    
-    static inline int cmp(const type x) {
-        if (fabs(x) < EPS)
+   
+    static constexpr CapacityType INF =
+        std::numeric_limits<CapacityType> :: max() / 2;
+     
+    template <class type>
+    int cmp(type x) {
+        if (-EPS < x and x < EPS)
             return 0;
         return x < 0 ? -1 : 1;
     }
-    
-    struct edge {
-        int x, y; type flo, cap;
+     
+    struct Edge {
+        int nod, nxt;
+        CapacityType cap, flo;
+ 
+        Edge() :
+            nod(0), nxt(0), cap(0), flo(0) {};
+        Edge(int _nod, int _nxt, CapacityType _cap) :
+            nod(_nod), nxt(_nxt), cap(_cap), flo(0) {};
+    }; std::vector<Edge> lst;
+     
+    std::vector<bool> oki; int ptr = 0;
+    std::vector<int> beg, que, adj, dis;
+     
+    bool bfs(const int src, const int dst) {
+        std::fill(dis.begin(), dis.end(), (CapacityType)INF);
+        dis[src] = 0; que[0] = src;
         
-        edge(int _x, int _y, type _cap) :
-        x(_x), y(_y), cap(_cap), flo(0) {};
-    };
-    
-    std::vector<bool> oki; std::deque<int> que;
-    std::vector<edge> lst; std::vector<type> dis;
-    std::vector<int> ptx; std::vector<std::vector<int>> edg;
-    
-    bool bfs(const int src, const int dst, type cap) {
-        std::fill(dis.begin(), dis.end(), (type)INF); dis[src] = 0;
-        
-        for (que.assign(1, src); que.size() and dis[dst] == INF; que.pop_front()) {
-            int x = que.front();
-            if (x == dst) continue;
+        for (int qbg = 0, qen = 0; qbg <= qen; ++qbg) {
+            const int x = que[qbg];
             
-            for (int it : edg[x]) {
-                int y = lst[it].y;
+            for (int it = beg[x]; it != NIL; it = lst[it].nxt) {
+                const int y = lst[it].nod;
+                 
+                if (cmp(lst[it].cap - lst[it].flo) and dis[y] == INF)
+                    dis[y] = dis[x] + 1, que[++qen] = y;
+            }
+        }
+         
+        return dis[dst] != INF;
+    }
+     
+    CapacityType dfs(const int x, const int dst, const CapacityType cap) {
+        if (!cmp(cap) or x == dst)
+            return cap;
+        
+        for (; adj[x] != NIL; adj[x] = lst[adj[x]].nxt) {
+            const int y = lst[adj[x]].nod;
+         
+            if (cmp(lst[adj[x]].cap - lst[adj[x]].flo) and dis[y] == dis[x] + 1) {
+                const CapacityType aux = dfs(y, dst, std::min(cap, lst[adj[x]].cap - lst[adj[x]].flo));
                 
-                if (cmp(lst[it].cap - lst[it].flo - cap) < 0)
-                    continue;
-                if (dis[y] > dis[x] + 1) {
-                    dis[y] = dis[x] + 1;
-                    que.push_back(y);
+                if (cmp(aux)) {
+                    lst[adj[x]].flo += aux;
+                    lst[adj[x] ^ 1].flo -= aux;
+                    return aux;
                 }
             }
         }
-        
-        return dis[dst] != INF;
+         
+        return 0;
     }
-    
-    bool dfs(const int x, const int dst, type cap) {
-        if (x == dst) return cap;
-        
-        for (; ptx[x] < edg[x].size(); ++ptx[x]) {
-            int it = edg[x][ptx[x]], y = lst[it].y;
-            
-            if (cmp(dis[y] - dis[x] - 1) != 0 or
-                cmp(lst[it].cap - lst[it].flo - cap) < 0)
-                continue;
-            
-            if (dfs(y, dst, cap)) {
-                lst[it].flo += cap;
-                lst[it ^ 1].flo -= cap;
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    void fill(const int x, std::vector<int> &ans) {
+     
+    void fill(const int x) {
         oki[x] = true;
-        
-        for (int it : edg[x]) {
-            int y = lst[it].y;
-            
+         
+        for (int it = beg[x]; it != NIL; it = lst[it].nxt) {
+            const int y = lst[it].nod;
+             
             if (cmp(lst[it].cap - lst[it].flo) and !oki[y])
-                fill(y, ans);
+                fill(y);
         }
     }
 public:
-    MaxFlow(int sz) {
-        edg.resize(sz); dis.resize(sz);
-        oki.resize(sz); ptx.resize(sz);
+    MaxFlow(int szn, int szm) {
+        dis.resize(szn); beg.resize(szn);
+        que.resize(szn); adj.resize(szn);
+        oki.resize(szn); lst.resize(szm); // m != n
+         
+        std::fill(beg.begin(), beg.end(), (int)NIL);
     }
-    
-    inline void addUndirectedEdge(const int x, const int y, const type c) {
-        edg[x].push_back((int) lst.size()); lst.push_back(edge(x, y, c));
-        edg[y].push_back((int) lst.size()); lst.push_back(edge(y, x, c));
+     
+    inline void addDirectedEdge(const int x, const int y, const CapacityType cap) {
+        lst[ptr] = Edge(y, beg[x], cap); beg[x] = ptr++;
+        lst[ptr] = Edge(x, beg[y],  0 ); beg[y] = ptr++;
     }
-    
-    inline void addDirectedEdge(const int x, const int y, const type c) {
-        edg[x].push_back((int) lst.size()); lst.push_back(edge(x, y, c));
-        edg[y].push_back((int) lst.size()); lst.push_back(edge(y, x, 0));
+     
+    inline void addUndirectedEdge(const int x, const int y, const CapacityType cap) {
+        lst[ptr] = Edge(y, beg[x], cap); beg[x] = ptr++;
+        lst[ptr] = Edge(x, beg[y], cap); beg[y] = ptr++;
     }
-    
-    type getMaxFlow(const int src, const int dst) {
-        type lim = INF;
-        for (int i = 0; i < lst.size(); ++i) {
+     
+    CapacityType getMaxFlow(const int src, const int dst) {
+        CapacityType aux, ans = 0;
+        for (int i = 0; i < ptr; ++i)
             lst[i].flo = 0;
-            lim = std::max(lim, lst[i].cap);
+         
+        while (bfs(src, dst)) {
+            copy(beg.begin(), beg.end(), adj.begin());
+             
+            do {
+                aux = dfs(src, dst, INF);
+                ans += aux;
+            } while (cmp(aux));
         }
-        
-        type ans = 0;
-        for (; cmp(lim); ) {
-            if (!bfs(src, dst, lim)) {
-                lim /= 2;
-                continue;
-            }
-            
-            std::fill(ptx.begin(), ptx.end(), 0);
-            while (dfs(src, dst, lim))
-                ans += lim;
-        }
-        
+         
         return ans;
     }
-    
-    type getMinCut(const int src, const int dst, std::vector<int> &ans) {
-        fill(oki.begin(), oki.end(), false);
-        type sol = getMaxFlow(src, dst);
-        
-        fill(src, ans); ans.clear();
-        for (int i = 0; i < edg.size(); ++i)
+     
+    CapacityType getMinCut(const int src, const int dst, std::vector<int> &ans) {
+        std::fill(oki.begin(), oki.end(), false);
+        CapacityType sol = getMaxFlow(src, dst); fill(src);
+         
+        ans.clear();
+        for (int i = 0; i < oki.size(); ++i)
             if (oki[i]) ans.push_back(i);
-        
+         
         return sol;
     }
-}; 
+}; MaxFlow<int> myNetwork(DIM + 5, DIM * DIM * 10);
