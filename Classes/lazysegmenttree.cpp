@@ -1,3 +1,4 @@
+// almost done (binary search function left)
 template <class NodeType, class UpdateType>
 class LazySegmentTree {
 private:
@@ -16,7 +17,7 @@ private:
     
     void buildTree(int nod, int lef, int rig, UpdateType *arr) {
         if (lef == rig)
-            sgt[nod] = tree(arr[lef], lef);
+            sgt[nod] = // EDIT HERE
         else {
             int mid = (lef + rig) >> 1;
             
@@ -29,7 +30,7 @@ private:
     /*
     void buildTree(int nod, int lef, int rig, UpdateType val) {
         if (lef == rig)
-            buildNode(sgt[nod], val, lef);
+            sgt[nod] = // EDIT HERE
         else {
             int mid = (lef + rig) >> 1;
             
@@ -108,15 +109,10 @@ public:
 
 template <class NodeType, class UpdateType>
 NodeType LazySegmentTree<NodeType, UpdateType>::mergeSons(NodeType son1, NodeType son2) {
-    if (son1.value <= son2.value)
-        return son1;
-    else
-        return son2;
+    // EDIT HERE
 }
 
 template <class NodeType, class UpdateType>
 void LazySegmentTree<NodeType, UpdateType>::updateLazy(NodeType &nod, NodeType &son1, NodeType &son2, bool ok) {
-    if (ok)
-        son1.lazy += nod.lazy, son2.lazy += nod.lazy;
-    nod.value += nod.lazy; nod.lazy = 0;
+    // EDIT HERE
 }
