@@ -123,4 +123,4 @@ public:
          
         return sol;
     }
-}; MaxFlow<int> myNetwork(DIM + 5, DIM * DIM * 10);
+};
