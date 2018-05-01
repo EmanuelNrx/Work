@@ -1,58 +1,73 @@
-// unverified
+// DONE
 class LazySegmentTree {
-private:
+public:
     struct Node {
-        //EDIT HERE
+        int mxv, pos, cnt;
         
-    } *sgt;
+        Node() :
+            mxv(0), pos(0), cnt(0) {};
+        Node(int _mxv, int _pos, int _cnt) :
+            mxv(_mxv), pos(_pos), cnt(_cnt) {};
+    } *sgt; static const Node nul;
     int siz, _lef, _rig;
     
     void updateLazy(int nod, int lef, int rig) {
-        //EDIT HERE
+        //nothing here
     }
     
     Node mergeSons(Node son1, Node son2) {
-        //EDIT HERE
+        Node ans(max(son1.mxv, son2.mxv), -1, son1.cnt + son2.cnt);
+        ans.pos = (ans.mxv == son1.mxv) ? son1.pos : son2.pos;
         
+        return ans;
     }
     
     template <typename Type>
     void updateNode(int nod, int lef, int rig, Type val) {
-        //EDIT HERE
+        sgt[nod].mxv = val; sgt[nod].pos = lef;
+        sgt[nod].cnt = val >= 0;
         
-        updateLazy(nod, lef, rig);
+        // updateLazy(nod, lef, rig);
+    }
+    
+    inline int findPos(const int lef, const int rig) {
+        return (lef + rig) | (lef != rig);
     }
     
     template <typename Type>
-    void _buildTree(int nod, int lef, int rig, Type *&arr) {
+    void _buildTree(int nod, int lef, int rig, Type arr[]) {
         if (lef == rig)
-            _updateNode(nod, lef, rig, arr[lef]);
+            updateNode(nod, lef, rig, arr[lef]);
         else {
-            int mid = (lef + rig) >> 1;
+            int mid = (lef + rig) >> 1,
+                lefSon = findPos(lef, mid),
+                rigSon = findPos(mid + 1, rig);
             
-            _buildTree(nod << 1, lef, mid, arr);
-            _buildTree(nod << 1 | 1, mid + 1, rig, arr);
+            _buildTree(lefSon, lef, mid, arr);
+            _buildTree(rigSon, mid + 1, rig, arr);
             
-            sgt[nod] = mergeSons(sgt[nod << 1], sgt[nod << 1 | 1]);
+            sgt[nod] = mergeSons(sgt[lefSon], sgt[rigSon]);
         }
     }
-
+    
     template <typename Type>
     void _updateTree(int nod, int lef, int rig, Type val) {
         if (_lef <= lef and rig <= _rig)
             updateNode(nod, lef, rig, val);
         else {
-            int mid = (lef + rig) >> 1;
+            int mid = (lef + rig) >> 1,
+                lefSon = findPos(lef, mid),
+                rigSon = findPos(mid + 1, rig);
             
-            updateLazy(nod << 1, lef, mid);
-            updateLazy(nod << 1 | 1, mid + 1, rig);
+            updateLazy(lefSon, lef, mid);
+            updateLazy(rigSon, mid + 1, rig);
             
             if (_lef <= mid)
-                _updateTree(nod << 1, lef, mid, val);
+                _updateTree(lefSon, lef, mid, val);
             if (mid < _rig)
-                _updateTree(nod << 1 | 1, mid + 1, rig, val);
+                _updateTree(rigSon, mid + 1, rig, val);
             
-            sgt[nod] = mergeSons(sgt[nod << 1], sgt[nod << 1 | 1]);
+            sgt[nod] = mergeSons(sgt[lefSon], sgt[rigSon]);
         }
     }
     
@@ -60,18 +75,20 @@ private:
         if (_lef <= lef and rig <= _rig)
             return sgt[nod];
         else {
-            int mid = (lef + rig) >> 1;
+            int mid = (lef + rig) >> 1,
+                lefSon = findPos(lef, mid),
+                rigSon = findPos(mid + 1, rig);
             
-            updateLazy(nod << 1, lef, mid);
-            updateLazy(nod << 1 | 1, mid + 1, rig);
+            updateLazy(lefSon, lef, mid);
+            updateLazy(rigSon, mid + 1, rig);
             
             if (_rig <= mid)
-                return _queryTree(nod << 1, lef, mid);
+                return _queryTree(lefSon, lef, mid);
             if (mid < _lef)
-                return _queryTree(nod << 1 | 1, mid + 1, rig);
+                return _queryTree(rigSon, mid + 1, rig);
             
-            return mergeSons(_queryTree(nod << 1, lef, mid),
-                             _queryTree(nod << 1 | 1, mid + 1, rig));
+            return mergeSons(_queryTree(lefSon, lef, mid),
+                             _queryTree(rigSon, mid + 1, rig));
         }
     }
     
@@ -79,15 +96,17 @@ private:
         if (lef == rig)
             return lef;
         else {
-            int mid = (lef + rig) >> 1;
+            int mid = (lef + rig) >> 1,
+                lefSon = findPos(lef, mid),
+                rigSon = findPos(mid + 1, rig);
             
-            updateLazy(nod << 1, lef, mid);
-            updateLazy(nod << 1 | 1, mid + 1, rig);
+            updateLazy(lefSon, lef, mid);
+            updateLazy(rigSon, mid + 1, rig);
             
-            if (good(sgt[nod << 1]))
-                return _findFirstKnow(nod << 1, lef, mid, good);
+            if (good(sgt[lefSon]))
+                return _findFirstKnow(lefSon, lef, mid, good);
             else
-                return _findFirstKnow(nod << 1, mid + 1, rig, good);
+                return _findFirstKnow(rigSon, mid + 1, rig, good);
         }
     }
     
@@ -95,15 +114,17 @@ private:
         if (_lef <= lef and _rig <= rig)
             return good(sgt[nod]) ? _findFirstKnow(nod, lef, rig, good) : -1;
         else {
-            int mid = (lef + rig) >> 1, res = -1;
+            int mid = (lef + rig) >> 1, res = -1,
+                lefSon = findPos(lef, mid),
+                rigSon = findPos(mid + 1, rig);
             
-            updateLazy(nod << 1, lef, mid);
-            updateLazy(nod << 1 | 1, mid + 1, rig);
+            updateLazy(lefSon, lef, mid);
+            updateLazy(rigSon, mid + 1, rig);
             
             if (_lef <= mid)
-                res = _findFirst(nod << 1, lef, mid, good);
+                res = _findFirst(lefSon, lef, mid, good);
             if (mid < _rig and res == -1)
-                res = _findFirst(nod << 1, mid + 1, rig, good);
+                res = _findFirst(rigSon, mid + 1, rig, good);
             
             return res;
         }
@@ -113,15 +134,17 @@ private:
         if (lef == rig)
             return lef;
         else {
-            int mid = (lef + rig) >> 1;
+            int mid = (lef + rig) >> 1,
+                lefSon = findPos(lef, mid),
+                rigSon = findPos(mid + 1, rig);
             
-            updateLazy(nod << 1, lef, mid);
-            updateLazy(nod << 1 | 1, mid + 1, rig);
+            updateLazy(lefSon, lef, mid);
+            updateLazy(rigSon, mid + 1, rig);
             
-            if (good(sgt[nod << 1 | 1]))
-                return _findLastKnow(nod << 1, mid + 1, rig, good);
+            if (good(sgt[rigSon]))
+                return _findLastKnow(rigSon, mid + 1, rig, good);
             else
-                return _findLastKnow(nod << 1, lef, mid, good);
+                return _findLastKnow(lefSon, lef, mid, good);
         }
     }
     
@@ -129,26 +152,37 @@ private:
         if (_lef <= lef and _rig <= rig)
             return good(sgt[nod]) ? _findLastKnow(nod, lef, rig, good) : -1;
         else {
-            int mid = (lef + rig) >> 1, res = -1;
+            int mid = (lef + rig) >> 1, res = -1,
+                lefSon = findPos(lef, mid),
+                rigSon = findPos(mid + 1, rig);
             
-            updateLazy(nod << 1, lef, mid);
-            updateLazy(nod << 1 | 1, mid + 1, rig);
+            updateLazy(lefSon, lef, mid);
+            updateLazy(rigSon, mid + 1, rig);
             
             if (mid < _rig)
-                res = _findLast(nod << 1, mid + 1, rig, good);
+                res = _findLast(rigSon, mid + 1, rig, good);
             if (_lef <= mid and res == -1)
-                res = _findLast(nod << 1, lef, mid, good);
+                res = _findLast(lefSon, lef, mid, good);
             
             return res;
         }
     }
 public:
     LazySegmentTree(int dim) {
-        sgt = new Node[dim << 2]; siz = dim;
+        sgt = new Node[dim << 1]; siz = dim;
+    }
+    
+    void resizeTree(int _siz) {
+        siz = _siz;
     }
     
     template <typename Type>
-    void updateTree(int lef, int rig, Type val) {
+    void buildTree(Type *arr) {
+        _buildTree(1, 1, siz, arr);
+    }
+    
+    template <typename Type>
+    void updateTree(int lef, int rig, Type val = nul) {
         _lef = lef; _rig = rig;
         _updateTree(1, 1, siz, val);
     }
@@ -158,12 +192,12 @@ public:
         return _queryTree(1, 1, siz);
     }
     
-    int findFirst(int lef, int rig, std::function<bool(Node&)> &good) {
+    int findFirst(int lef, int rig, std::function<bool(Node&)> good) {
         _lef = lef; _rig = rig;
         return _findFirst(1, 1, siz, good);
     }
     
-    int findLast(int lef, int rig, std::function<bool(Node&)> &good) {
+    int findLast(int lef, int rig, std::function<bool(Node&)> good) {
         _lef = lef; _rig = rig;
         return _findLast(1, 1, siz, good);
     }
