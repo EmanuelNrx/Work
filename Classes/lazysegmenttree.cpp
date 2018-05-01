@@ -2,32 +2,26 @@
 class LazySegmentTree {
 public:
     struct Node {
-        int mxv, pos, cnt;
+        //EDIT HERE
         
-        Node() :
-            mxv(0), pos(0), cnt(0) {};
-        Node(int _mxv, int _pos, int _cnt) :
-            mxv(_mxv), pos(_pos), cnt(_cnt) {};
     } *sgt; static const Node nul;
     int siz, _lef, _rig;
     
     void updateLazy(int nod, int lef, int rig) {
-        //nothing here
+        //EDIT HERE
+        
     }
     
     Node mergeSons(Node son1, Node son2) {
-        Node ans(max(son1.mxv, son2.mxv), -1, son1.cnt + son2.cnt);
-        ans.pos = (ans.mxv == son1.mxv) ? son1.pos : son2.pos;
+        //EDIT HERE
         
-        return ans;
     }
     
     template <typename Type>
     void updateNode(int nod, int lef, int rig, Type val) {
-        sgt[nod].mxv = val; sgt[nod].pos = lef;
-        sgt[nod].cnt = val >= 0;
+        //EDIT HERE
         
-        // updateLazy(nod, lef, rig);
+        updateLazy(nod, lef, rig);
     }
     
     inline int findPos(const int lef, const int rig) {
