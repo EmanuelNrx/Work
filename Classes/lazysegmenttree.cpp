@@ -1,118 +1,170 @@
-// almost done (binary search function left)
-template <class NodeType, class UpdateType>
+// unverified
 class LazySegmentTree {
 private:
+    struct Node {
+        //EDIT HERE
+        
+    } *sgt;
     int siz, _lef, _rig;
-    NodeType *sgt; UpdateType val;
     
-    NodeType mergeSons(NodeType son1, NodeType son2);
-    void updateLazy(NodeType &nod, NodeType &son1, NodeType &son2, bool ok);
-    
-    void _updateLazy(int nod, int lef, int rig) {
-        if (lef == rig)
-            updateLazy(sgt[nod], sgt[nod], sgt[nod], false);
-        else
-            updateLazy(sgt[nod], sgt[nod << 1], sgt[nod << 1 | 1], true);
+    void updateLazy(int nod, int lef, int rig) {
+        //EDIT HERE
     }
     
-    void buildTree(int nod, int lef, int rig, UpdateType *arr) {
+    Node mergeSons(Node son1, Node son2) {
+        //EDIT HERE
+        
+    }
+    
+    template <typename Type>
+    void updateNode(int nod, int lef, int rig, Type val) {
+        //EDIT HERE
+        
+        updateLazy(nod, lef, rig);
+    }
+    
+    template <typename Type>
+    void _buildTree(int nod, int lef, int rig, Type *&arr) {
         if (lef == rig)
-            sgt[nod] = // EDIT HERE
+            _updateNode(nod, lef, rig, arr[lef]);
         else {
             int mid = (lef + rig) >> 1;
             
-            buildTree(nod << 1, lef, mid, arr);
-            buildTree(nod << 1 | 1, mid + 1, rig, arr);
+            _buildTree(nod << 1, lef, mid, arr);
+            _buildTree(nod << 1 | 1, mid + 1, rig, arr);
             
             sgt[nod] = mergeSons(sgt[nod << 1], sgt[nod << 1 | 1]);
         }
     }
-    /*
-    void buildTree(int nod, int lef, int rig, UpdateType val) {
-        if (lef == rig)
-            sgt[nod] = // EDIT HERE
+
+    template <typename Type>
+    void _updateTree(int nod, int lef, int rig, Type val) {
+        if (_lef <= lef and rig <= _rig)
+            updateNode(nod, lef, rig, val);
         else {
             int mid = (lef + rig) >> 1;
             
-            buildTree(nod << 1, lef, mid, val);
-            buildTree(nod << 1 | 1, mid + 1, rig, val);
-            
-            sgt[nod] = mergeSons(sgt[nod << 1], sgt[nod << 1 | 1]);
-        }
-    }
-    */
-    void updateTree(int nod, int lef, int rig) {
-        if (_lef <= lef and rig <= _rig) {
-            sgt[nod].lazy += val;
-            _updateLazy(nod, lef, rig);
-        }
-        else {
-            int mid = (lef + rig) >> 1;
-            
-            _updateLazy(nod << 1, lef, mid);
-            _updateLazy(nod << 1 | 1, mid + 1, rig);
+            updateLazy(nod << 1, lef, mid);
+            updateLazy(nod << 1 | 1, mid + 1, rig);
             
             if (_lef <= mid)
-                updateTree(nod << 1, lef, mid);
+                _updateTree(nod << 1, lef, mid, val);
             if (mid < _rig)
-                updateTree(nod << 1 | 1, mid + 1, rig);
+                _updateTree(nod << 1 | 1, mid + 1, rig, val);
             
             sgt[nod] = mergeSons(sgt[nod << 1], sgt[nod << 1 | 1]);
         }
     }
     
-    NodeType queryTree(int nod, int lef, int rig) {
+    Node _queryTree(int nod, int lef, int rig) {
         if (_lef <= lef and rig <= _rig)
             return sgt[nod];
         else {
             int mid = (lef + rig) >> 1;
             
-            _updateLazy(nod << 1, lef, mid);
-            _updateLazy(nod << 1 | 1, mid + 1, rig);
+            updateLazy(nod << 1, lef, mid);
+            updateLazy(nod << 1 | 1, mid + 1, rig);
             
             if (_rig <= mid)
-                return queryTree(nod << 1, lef, mid);
+                return _queryTree(nod << 1, lef, mid);
             if (mid < _lef)
-                return queryTree(nod << 1 | 1, mid + 1, rig);
+                return _queryTree(nod << 1 | 1, mid + 1, rig);
             
-            return mergeSons(queryTree(nod << 1, lef, mid),
-                             queryTree(nod << 1 | 1, mid + 1, rig));
+            return mergeSons(_queryTree(nod << 1, lef, mid),
+                             _queryTree(nod << 1 | 1, mid + 1, rig));
+        }
+    }
+    
+    int _findFirstKnow(int nod, int lef, int rig, std::function<bool(Node&)> &good) {
+        if (lef == rig)
+            return lef;
+        else {
+            int mid = (lef + rig) >> 1;
+            
+            updateLazy(nod << 1, lef, mid);
+            updateLazy(nod << 1 | 1, mid + 1, rig);
+            
+            if (good(sgt[nod << 1]))
+                return _findFirstKnow(nod << 1, lef, mid, good);
+            else
+                return _findFirstKnow(nod << 1, mid + 1, rig, good);
+        }
+    }
+    
+    int _findFirst(int nod, int lef, int rig, std::function<bool(Node&)> &good) {
+        if (_lef <= lef and _rig <= rig)
+            return good(sgt[nod]) ? _findFirstKnow(nod, lef, rig, good) : -1;
+        else {
+            int mid = (lef + rig) >> 1, res = -1;
+            
+            updateLazy(nod << 1, lef, mid);
+            updateLazy(nod << 1 | 1, mid + 1, rig);
+            
+            if (_lef <= mid)
+                res = _findFirst(nod << 1, lef, mid, good);
+            if (mid < _rig and res == -1)
+                res = _findFirst(nod << 1, mid + 1, rig, good);
+            
+            return res;
+        }
+    }
+    
+    int _findLastKnow(int nod, int lef, int rig, std::function<bool(Node&)> &good) {
+        if (lef == rig)
+            return lef;
+        else {
+            int mid = (lef + rig) >> 1;
+            
+            updateLazy(nod << 1, lef, mid);
+            updateLazy(nod << 1 | 1, mid + 1, rig);
+            
+            if (good(sgt[nod << 1 | 1]))
+                return _findLastKnow(nod << 1, mid + 1, rig, good);
+            else
+                return _findLastKnow(nod << 1, lef, mid, good);
+        }
+    }
+    
+    int _findLast(int nod, int lef, int rig, std::function<bool(Node&)> &good) {
+        if (_lef <= lef and _rig <= rig)
+            return good(sgt[nod]) ? _findLastKnow(nod, lef, rig, good) : -1;
+        else {
+            int mid = (lef + rig) >> 1, res = -1;
+            
+            updateLazy(nod << 1, lef, mid);
+            updateLazy(nod << 1 | 1, mid + 1, rig);
+            
+            if (mid < _rig)
+                res = _findLast(nod << 1, mid + 1, rig, good);
+            if (_lef <= mid and res == -1)
+                res = _findLast(nod << 1, lef, mid, good);
+            
+            return res;
         }
     }
 public:
     LazySegmentTree(int dim) {
-        sgt = new NodeType[dim << 2]; siz = dim;
+        sgt = new Node[dim << 2]; siz = dim;
     }
     
-    inline void resize(int dim) {
-        siz = dim;
-    }
-    
-    inline void build(UpdateType *arr) {
-        buildTree(1, 1, siz, arr);
-    }
-    /*
-    inline void build(UpdateType val) {
-        buildTree(1, 1, siz, val);
-    }
-    */
-    inline void update(int lef, int rig, UpdateType cns) {
-        _lef = lef; _rig = rig; val = cns;
-        updateTree(1, 1, siz);
-    }
-    
-    inline NodeType query(int lef, int rig) {
+    template <typename Type>
+    void updateTree(int lef, int rig, Type val) {
         _lef = lef; _rig = rig;
-        return queryTree(1, 1, siz);
+        _updateTree(1, 1, siz, val);
     }
-}; LazySegmentTree<tree, long long> mySegmentTree(DIM);
-
-template <class NodeType, class UpdateType>
-NodeType LazySegmentTree<NodeType, UpdateType>::mergeSons(NodeType son1, NodeType son2) {
-    // EDIT HERE
-}
-
-template <class NodeType, class UpdateType>
-void LazySegmentTree<NodeType, UpdateType>::updateLazy(NodeType &nod, NodeType &son1, NodeType &son2, bool ok) {
-    // EDIT HERE
-}
+    
+    Node queryTree(int lef, int rig) {
+        _lef = lef; _rig = rig;
+        return _queryTree(1, 1, siz);
+    }
+    
+    int findFirst(int lef, int rig, std::function<bool(Node&)> &good) {
+        _lef = lef; _rig = rig;
+        return _findFirst(1, 1, siz, good);
+    }
+    
+    int findLast(int lef, int rig, std::function<bool(Node&)> &good) {
+        _lef = lef; _rig = rig;
+        return _findLast(1, 1, siz, good);
+    }
+};
